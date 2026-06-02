@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RC4 Encryption | CryptoS </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #7BC6FF;
+      --primary-dark: #5EB4FF;
+      --light: #E0F2FE;
+      --white: #FFFFFF;
+      --text: #1E3A8A;
+      --gray: #64748B;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-row {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    nav a {
+      margin-left: 1.8rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 2rem;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 2.8rem;
+      margin-bottom: 2.5rem;
+      color: var(--text);
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 15px 35px rgba(123, 198, 255, 0.15);
+      border: 1px solid var(--light);
+    }
+
+    .input-group {
+      margin-bottom: 1.8rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid var(--light);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: #F8FBFF;
+      transition: 0.3s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(123, 198, 255, 0.2);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    button {
+      flex: 1;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #encryptBtn {
+      background: var(--primary);
+      color: white;
+    }
+
+    #decryptBtn {
+      background: var(--light);
+      color: var(--text);
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+    }
+
+    .result {
+      margin-top: 1rem;
+      padding: 12px;
+      background: #F0F9FF;
+      border-radius: 12px;
+      font-family: monospace;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-row">
+      <a href="index.html" class="brand">CryptoS</a>
+      <nav>
+        <a href="rc4.html">RC4 Encryption</a>
+        <a href="steganography.html">Steganography</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">🔐 RC4 Encryption</h1>
+    
+    <div class="card">
+      <div class="input-group">
+        <label>Plaintext Message</label>
+        <textarea id="messageInput" rows="4" placeholder="Masukkan pesan yang ingin dienkripsi..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label>Encryption Key</label>
+        <input type="text" id="keyInput" placeholder="Masukkan kunci (minimal 1 karakter)" />
+      </div>
+
+      <div class="btn-group">
+        <button id="encryptBtn">🔒 Encrypt</button>
+        <button id="decryptBtn">🔓 Decrypt</button>
+      </div>
+
+      <div class="input-group">
+        <label>Ciphertext (Hex)</label>
+        <textarea id="ciphertextInput" rows="4" readonly placeholder="Hasil enkripsi akan muncul di sini..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label>Decrypted Text</label>
+        <textarea id="plaintextInput" rows="4" readonly placeholder="Hasil dekripsi akan muncul di sini..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== RC4 ALGORITHM (BENAR) ====================
+    function rc4(text, key) {
+      if (!key) return "";
+
+      let s = new Array(256);
+      for (let i = 0; i < 256; i++) {
+        s[i] = i;
+      }
+
+      // Key Scheduling Algorithm (KSA)
+      let j = 0;
+      for (let i = 0; i < 256; i++) {
+        j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
+        [s[i], s[j]] = [s[j], s[i]];
+      }
+
+      // Pseudo-Random Generation Algorithm (PRGA)
+      let i = 0;
+      j = 0;                    // ← Penting! Reset j
+      let result = '';
+
+      for (let idx = 0; idx < text.length; idx++) {
+        i = (i + 1) % 256;
+        j = (j + s[i]) % 256;
+        [s[i], s[j]] = [s[j], s[i]];
+
+        const k = s[(s[i] + s[j]) % 256];
+        result += String.fromCharCode(text.charCodeAt(idx) ^ k);
+      }
+      return result;
+    }
+
+    // Convert string to Hex
+    function toHex(str) {
+      return Array.from(str)
+        .map(char => char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
+        .join('');
+    }
+
+    // Convert Hex to string
+    function fromHex(hex) {
+      hex = hex.trim();
+      if (hex.length % 2 !== 0) throw new Error("Hex length invalid");
+      
+      let str = '';
+      for (let i = 0; i < hex.length; i += 2) {
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+      }
+      return str;
+    }
+
+    // Event Listeners
+    document.getElementById('encryptBtn').addEventListener('click', () => {
+      const message = document.getElementById('messageInput').value;
+      const key = document.getElementById('keyInput').value;
+
+      if (!message) {
+        alert("❌ Pesan tidak boleh kosong!");
+        return;
+      }
+      if (!key) {
+        alert("❌ Encryption Key tidak boleh kosong!");
+        return;
+      }
+
+      const encrypted = rc4(message, key);
+      const hexEncrypted = toHex(encrypted);
+
+      document.getElementById('ciphertextInput').value = hexEncrypted;
+      document.getElementById('plaintextInput').value = '';
+    });
+
+    document.getElementById('decryptBtn').addEventListener('click', () => {
+      const hexCipher = document.getElementById('ciphertextInput').value.trim();
+      const key = document.getElementById('keyInput').value;
+
+      if (!hexCipher) {
+        alert("❌ Ciphertext tidak boleh kosong!");
+        return;
+      }
+      if (!key) {
+        alert("❌ Encryption Key tidak boleh kosong!");
+        return;
+      }
+
+      try {
+        const encrypted = fromHex(hexCipher);
+        const decrypted = rc4(encrypted, key);
+        document.getElementById('plaintextInput').value = decrypted;
+      } catch (e) {
+        alert("❌ Ciphertext hex tidak valid!");
+      }
+    });
+  </script>
+
+</body>
+</html>

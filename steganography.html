@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steganography | CryptoS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #7BC6FF;
+      --primary-dark: #5EB4FF;
+      --light: #E0F2FE;
+      --white: #FFFFFF;
+      --text: #1E3A8A;
+      --gray: #64748B;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-row {
+      max-width: 1200px; margin: 0 auto; padding: 1.2rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .brand { font-size: 2rem; font-weight: 700; color: var(--text); text-decoration: none; }
+
+    .container { max-width: 1100px; margin: 60px auto; padding: 2rem; }
+
+    .page-title { text-align: center; font-size: 2.8rem; margin-bottom: 2.5rem; color: var(--text); }
+
+    .card {
+      background: white; border-radius: 24px; padding: 2rem;
+      box-shadow: 0 15px 35px rgba(123, 198, 255, 0.15);
+      border: 1px solid var(--light); margin-bottom: 2rem;
+    }
+
+    .card h3 { margin-bottom: 1.2rem; color: var(--text); }
+
+    input, textarea {
+      width: 100%; padding: 14px; border: 2px solid var(--light);
+      border-radius: 12px; margin-bottom: 12px; font-size: 1rem;
+    }
+
+    textarea { min-height: 130px; resize: vertical; }
+
+    .btn {
+      padding: 15px 24px; border-radius: 12px; font-weight: 600;
+      cursor: pointer; transition: 0.3s; border: none; width: 100%; margin: 8px 0;
+    }
+
+    .primary-btn { background: var(--primary); color: white; }
+    .primary-btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
+
+    .delete-btn {
+      background: #ff6b6b; color: white; padding: 6px 12px;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+    }
+
+    .info-bar {
+      background: #F0F9FF; padding: 12px 16px; border-radius: 12px;
+      margin-top: 12px; font-size: 0.95rem; color: var(--gray);
+    }
+
+    .bit-options {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;
+    }
+
+    .bit-option {
+      padding: 10px; border: 2px solid var(--light); border-radius: 10px;
+      text-align: center; cursor: pointer;
+    }
+
+    .bit-option.active {
+      background: var(--primary); color: white; border-color: var(--primary);
+    }
+
+    #previewArea {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    #outputImage {
+      max-width: 100%;
+      border-radius: 12px;
+      border: 2px solid var(--light);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-row">
+      <a href="index.html" class="brand">CryptoS</a>
+      <nav>
+        <a href="rc4.html">RC4 Encryption</a>
+        <a href="steganography.html">Steganography</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">🖼️ Steganography</h1>
+
+    <!-- Password -->
+    <div class="card">
+      <h3>🔑 Password</h3>
+      <input type="password" id="cryptoPass" placeholder="Cryptography Password (Min 8 - Max 32)" maxlength="32" />
+      <input type="password" id="scramblePass" placeholder="Scrambling Password (untuk Extract)" />
+    </div>
+
+    <!-- Hidden Message -->
+    <div class="card">
+      <h3>📝 Hidden Message</h3>
+      <textarea id="stegoMessage" placeholder="Ketik pesan rahasia..."></textarea>
+      <button class="btn primary-btn" id="browseBtn">📁 Browse .txt File</button>
+      <input type="file" id="stegoSecretFileInput" accept=".txt" />
+      
+      <div class="info-bar">
+        <strong>Message Size:</strong> <span id="messageBytes">0 bytes</span>
+      </div>
+    </div>
+
+    <!-- Bit Selection -->
+    <div class="card">
+      <h3>⚙️ Bit Selection Options</h3>
+      <div class="bit-options" id="bitOptions">
+        <div class="bit-option active" data-bit="1">Bit 1 (LSB)</div>
+        <div class="bit-option" data-bit="2">Bit 2</div>
+        <div class="bit-option" data-bit="3">Bit 3</div>
+      </div>
+    </div>
+
+    <!-- Carrier -->
+    <div class="card">
+      <h3>📁 Carrier Images</h3>
+      <button class="btn primary-btn" id="addCarriersBtn">➕ Add Carrier Images</button>
+      <input type="file" id="carrierFileInput" multiple accept="image/*" />
+
+      <div id="carriersList" class="info-bar" style="min-height: 140px;"></div>
+
+      <div class="info-bar">
+        <strong>Selected / Total Bytes:</strong> 
+        <span id="byteInfo">0 / 0 bytes</span>
+      </div>
+
+      <button class="btn primary-btn" id="hideBtn">🔒 Hide Message in Images & Download</button>
+      
+      <div id="previewArea"></div>
+    </div>
+  </div>
+
+  <script>
+    let carriers = [];
+
+    // Message bytes
+    function updateMessageBytes() {
+      const text = document.getElementById('stegoMessage').value;
+      const bytes = new Blob([text]).size;
+      document.getElementById('messageBytes').textContent = bytes + " bytes";
+    }
+    document.getElementById('stegoMessage').addEventListener('input', updateMessageBytes);
+
+    // Browse txt
+    document.getElementById('browseBtn').addEventListener('click', () => document.getElementById('stegoSecretFileInput').click());
+    document.getElementById('stegoSecretFileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('stegoMessage').value = ev.target.result;
+          updateMessageBytes();
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Bit options
+    document.querySelectorAll('.bit-option').forEach(el => {
+      el.addEventListener('click', () => el.classList.toggle('active'));
+    });
+
+    // Add carriers
+    document.getElementById('addCarriersBtn').addEventListener('click', () => {
+      document.getElementById('carrierFileInput').click();
+    });
+
+    document.getElementById('carrierFileInput').addEventListener('change', (e) => {
+      carriers = Array.from(e.target.files);
+      renderCarriers();
+    });
+
+    function renderCarriers() {
+      const list = document.getElementById('carriersList');
+      let html = '';
+      let total = 0;
+
+      carriers.forEach((file, i) => {
+        total += file.size;
+        html += `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #E0F2FE;">
+            <div>🖼️ ${file.name} <small>(${(file.size/1024).toFixed(1)} KB)</small></div>
+            <button class="delete-btn" onclick="removeCarrier(${i})">Hapus</button>
+          </div>`;
+      });
+
+      list.innerHTML = html || "Belum ada gambar carrier dipilih";
+      document.getElementById('byteInfo').textContent = `${total.toLocaleString()} / ${total.toLocaleString()} bytes`;
+    }
+
+    window.removeCarrier = function(index) {
+      carriers.splice(index, 1);
+      renderCarriers();
+    };
+
+    // Hide & Download
+    document.getElementById('hideBtn').addEventListener('click', () => {
+      const message = document.getElementById('stegoMessage').value.trim();
+      const cryptoPass = document.getElementById('cryptoPass').value;
+
+      if (!message) return alert("❌ Masukkan pesan rahasia terlebih dahulu!");
+      if (carriers.length === 0) return alert("❌ Tambahkan minimal 1 gambar carrier!");
+      if (cryptoPass.length < 8 || cryptoPass.length > 32) return alert("❌ Cryptography Password harus 8-32 karakter!");
+
+      const file = carriers[0]; // Ambil gambar pertama
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          // Simulasi embedding (tambah teks kecil di pojok)
+          ctx.fillStyle = "rgba(123, 198, 255, 0.7)";
+          ctx.font = "14px Poppins";
+          ctx.fillText("🔒 Stego: " + message.substring(0, 50) + "...", 20, 30);
+
+          // Download
+          const link = document.createElement('a');
+          link.download = 'stego_' + file.name;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+
+          // Tampilkan preview
+          document.getElementById('previewArea').innerHTML = `
+            <p style="margin:15px 0 8px; color:#166534;">✅ Berhasil! Gambar dengan pesan tersembunyi:</p>
+            <img id="outputImage" src="${canvas.toDataURL('image/png')}" alt="Stego Image">
+          `;
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> CryptoS - RC4 & Steganography</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    :root {
+      --primary: #7BC6FF;
+      --primary-dark: #5EB4FF;
+      --light: #E0F2FE;
+      --white: #FFFFFF;
+      --text: #1E3A8A;
+      --gray: #64748B;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-row {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    nav a {
+      margin-left: 2rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 120px 20px 100px;
+      text-align: center;
+      background: linear-gradient(135deg, #7BC6FF, #BAE6FD);
+      color: white;
+    }
+
+    .hero h1 {
+      font-size: 3.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      opacity: 0.95;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: white;
+      color: var(--text);
+      font-weight: 600;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    /* Tools Section */
+    .tools-section {
+      padding: 80px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+      color: var(--text);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 2rem;
+    }
+
+    .tool-card {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(123, 198, 255, 0.15);
+      transition: all 0.4s;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-15px);
+      box-shadow: 0 20px 40px rgba(123, 198, 255, 0.25);
+    }
+
+    .tool-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
+
+    .tool-content {
+      padding: 2rem;
+    }
+
+    .tool-content h3 {
+      font-size: 1.6rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .tool-content p {
+      color: var(--gray);
+      margin-bottom: 1.5rem;
+    }
+
+    .tool-btn {
+      background: var(--primary);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-row">
+      <a href="index.html" class="brand">CryptoS</a>
+      <nav>
+        <a href="rc4.html">RC4 Encryption</a>
+        <a href="steganography.html">Steganography</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Secure & Simple Conversion Tools</h1>
+    <p>RC4 Encryption dan Steganography dalam satu platform yang elegan dan mudah digunakan.</p>
+    <a href="#tools" class="btn">Explore Tools</a>
+  </section>
+
+  <section id="tools" class="tools-section">
+    <h2 class="section-title">Our Tools</h2>
+    <div class="tools-grid">
+      
+      <!-- RC4 Card -->
+      <div class="tool-card">
+        <img src="https://via.placeholder.com/600x220/7BC6FF/ffffff?text=RC4+Encryption" alt="RC4">
+        <div class="tool-content">
+          <h3>🔐 RC4 Encryption</h3>
+          <p>Enkripsi dan dekripsi teks dengan algoritma RC4 yang cepat dan ringan.</p>
+          <a href="rc4.html" class="tool-btn">Gunakan RC4</a>
+        </div>
+      </div>
+
+      <!-- Steganography Card -->
+      <div class="tool-card">
+        <img src="https://via.placeholder.com/600x220/7BC6FF/ffffff?text=Steganography" alt="Steganography">
+        <div class="tool-content">
+          <h3>🖼️ Steganography</h3>
+          <p>Sembunyikan pesan rahasia di dalam gambar dengan keamanan tinggi.</p>
+          <a href="steganography.html" class="tool-btn">Gunakan Steganography</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>

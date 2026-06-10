@@ -103,6 +103,29 @@
       border-radius: 12px;
       border: 2px solid var(--light);
     }
+
+    /* Tambahan untuk Extract */
+    #extractPreview {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    #extractedImage {
+      max-width: 100%;
+      border-radius: 12px;
+      border: 2px solid var(--light);
+    }
+
+    .extracted-message {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      font-family: monospace;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -120,26 +143,23 @@
   <div class="container">
     <h1 class="page-title">🖼️ Steganography</h1>
 
-    <!-- Password -->
     <div class="card">
       <h3>🔑 Password</h3>
       <input type="password" id="cryptoPass" placeholder="Cryptography Password (Min 8 - Max 32)" maxlength="32" />
       <input type="password" id="scramblePass" placeholder="Scrambling Password (untuk Extract)" />
     </div>
 
-    <!-- Hidden Message -->
     <div class="card">
       <h3>📝 Hidden Message</h3>
       <textarea id="stegoMessage" placeholder="Ketik pesan rahasia..."></textarea>
       <button class="btn primary-btn" id="browseBtn">📁 Browse .txt File</button>
-      <input type="file" id="stegoSecretFileInput" accept=".txt" />
+      <input type="file" id="stegoSecretFileInput" style="display:none;" accept=".txt" />
       
       <div class="info-bar">
         <strong>Message Size:</strong> <span id="messageBytes">0 bytes</span>
       </div>
     </div>
 
-    <!-- Bit Selection -->
     <div class="card">
       <h3>⚙️ Bit Selection Options</h3>
       <div class="bit-options" id="bitOptions">
@@ -149,13 +169,12 @@
       </div>
     </div>
 
-    <!-- Carrier -->
     <div class="card">
       <h3>📁 Carrier Images</h3>
       <button class="btn primary-btn" id="addCarriersBtn">➕ Add Carrier Images</button>
-      <input type="file" id="carrierFileInput" multiple accept="image/*" />
+      <input type="file" id="carrierFileInput" style="display:none;" multiple accept="image/*" />
 
-      <div id="carriersList" class="info-bar" style="min-height: 140px;"></div>
+      <div id="carriersList" class="info-bar" style="min-height: 140px;">Belum ada gambar carrier dipilih</div>
 
       <div class="info-bar">
         <strong>Selected / Total Bytes:</strong> 
@@ -165,6 +184,33 @@
       <button class="btn primary-btn" id="hideBtn">🔒 Hide Message in Images & Download</button>
       
       <div id="previewArea"></div>
+    </div>
+
+    <!-- ==================== BAGIAN EXTRACT (BARU) ==================== -->
+    <div class="card">
+      <h3>🔓 Extract Hidden Message</h3>
+      <p style="margin-bottom: 1rem; color: var(--gray);">Upload gambar yang sudah berisi pesan tersembunyi untuk mengekstraknya.</p>
+      
+      <button class="btn primary-btn" id="uploadStegoBtn">📤 Upload Stego Image</button>
+      <input type="file" id="stegoExtractInput" style="display:none;" accept="image/*" />
+
+      <div id="stegoImagePreview" style="margin: 15px 0; text-align:center; display:none;">
+        <img id="extractedImage" style="max-width:100%; border-radius:12px; border:2px solid var(--light);" alt="Stego Image">
+      </div>
+
+      <div class="bit-options" id="extractBitOptions" style="margin: 15px 0;">
+        <div class="bit-option active" data-bit="1">Bit 1 (LSB)</div>
+        <div class="bit-option" data-bit="2">Bit 2</div>
+        <div class="bit-option" data-bit="3">Bit 3</div>
+      </div>
+
+      <button class="btn primary-btn" id="extractBtn">🔓 Extract Message</button>
+
+      <div id="extractResult" style="display:none; margin-top: 1.5rem;">
+        <h4 style="margin-bottom: 0.8rem;">📄 Pesan Tersembunyi:</h4>
+        <div class="extracted-message" id="extractedText"></div>
+        <button class="btn primary-btn" id="copyExtractBtn" style="margin-top: 10px;">📋 Copy Message</button>
+      </div>
     </div>
   </div>
 
@@ -195,7 +241,10 @@
 
     // Bit options
     document.querySelectorAll('.bit-option').forEach(el => {
-      el.addEventListener('click', () => el.classList.toggle('active'));
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.bit-option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+      });
     });
 
     // Add carriers
@@ -231,7 +280,7 @@
       renderCarriers();
     };
 
-    // Hide & Download
+    // --- LOGIKA EMEDDING LSB RAHASIA (DI-PERBAIKI) ---
     document.getElementById('hideBtn').addEventListener('click', () => {
       const message = document.getElementById('stegoMessage').value.trim();
       const cryptoPass = document.getElementById('cryptoPass').value;
@@ -240,7 +289,101 @@
       if (carriers.length === 0) return alert("❌ Tambahkan minimal 1 gambar carrier!");
       if (cryptoPass.length < 8 || cryptoPass.length > 32) return alert("❌ Cryptography Password harus 8-32 karakter!");
 
-      const file = carriers[0]; // Ambil gambar pertama
+      const file = carriers[0]; // Ambil gambar pertama sebagai carrier
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+
+          const finalMessage = message + "##END_STEGO##";
+          
+          let bitString = "";
+          for (let i = 0; i < finalMessage.length; i++) {
+            let binaryChar = finalMessage.charCodeAt(i).toString(2);
+            while (binaryChar.length < 8) {
+              binaryChar = "0" + binaryChar;
+            }
+            bitString += binaryChar;
+          }
+
+          if (bitString.length > (data.length * 3 / 4)) {
+            return alert("❌ Ukuran pesan terlalu besar untuk kapasitas piksel gambar ini!");
+          }
+
+          const activeBitOpt = document.querySelector('.bit-option.active');
+          const bitPosition = activeBitOpt ? parseInt(activeBitOpt.getAttribute('data-bit')) - 1 : 0;
+
+          let bitIndex = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            for (let channel = 0; channel < 3; channel++) {
+              if (bitIndex < bitString.length) {
+                const currentBit = parseInt(bitString[bitIndex]);
+                
+                if (bitPosition === 0) {
+                  data[i + channel] = (data[i + channel] & 0xFE) | currentBit;
+                } else {
+                  const mask = ~(1 << bitPosition);
+                  data[i + channel] = (data[i + channel] & mask) | (currentBit << bitPosition);
+                }
+                bitIndex++;
+              } else {
+                break;
+              }
+            }
+            if (bitIndex >= bitString.length) break;
+          }
+
+          ctx.putImageData(imgData, 0, 0);
+
+          const stegoDataUrl = canvas.toDataURL('image/png');
+
+          const link = document.createElement('a');
+          let cleanFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          link.download = cleanFileName + '.png';
+          link.href = stegoDataUrl;
+          link.click();
+
+          document.getElementById('previewArea').innerHTML = `
+            <p style="margin:15px 0 8px; color:#166534; font-weight:600;">✅ Berhasil disembunyikan dalam bit piksel!</p>
+            <img id="outputImage" src="${stegoDataUrl}" alt="Stego Image">
+          `;
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ==================== LOGIKA EXTRACT (DITAMBAHKAN) ====================
+    let currentStegoFile = null;
+
+    document.getElementById('uploadStegoBtn').addEventListener('click', () => {
+      document.getElementById('stegoExtractInput').click();
+    });
+
+    document.getElementById('stegoExtractInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentStegoFile = file;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        document.getElementById('extractedImage').src = ev.target.result;
+        document.getElementById('stegoImagePreview').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('extractBtn').addEventListener('click', () => {
+      if (!currentStegoFile) return alert("❌ Upload gambar stego terlebih dahulu!");
 
       const reader = new FileReader();
       reader.onload = function(event) {
@@ -252,26 +395,56 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
 
-          // Simulasi embedding (tambah teks kecil di pojok)
-          ctx.fillStyle = "rgba(123, 198, 255, 0.7)";
-          ctx.font = "14px Poppins";
-          ctx.fillText("🔒 Stego: " + message.substring(0, 50) + "...", 20, 30);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
 
-          // Download
-          const link = document.createElement('a');
-          link.download = 'stego_' + file.name;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
+          const activeBitOpt = document.querySelector('#extractBitOptions .bit-option.active');
+          const bitPosition = activeBitOpt ? parseInt(activeBitOpt.getAttribute('data-bit')) - 1 : 0;
 
-          // Tampilkan preview
-          document.getElementById('previewArea').innerHTML = `
-            <p style="margin:15px 0 8px; color:#166534;">✅ Berhasil! Gambar dengan pesan tersembunyi:</p>
-            <img id="outputImage" src="${canvas.toDataURL('image/png')}" alt="Stego Image">
-          `;
+          let bitString = "";
+          let extractedBytes = "";
+
+          for (let i = 0; i < data.length; i += 4) {
+            for (let channel = 0; channel < 3; channel++) {
+              let pixelValue = data[i + channel];
+              let extractedBit = (bitPosition === 0) 
+                ? (pixelValue & 1) 
+                : ((pixelValue >> bitPosition) & 1);
+              
+              bitString += extractedBit;
+
+              if (bitString.length % 8 === 0) {
+                const byte = parseInt(bitString.slice(-8), 2);
+                extractedBytes += String.fromCharCode(byte);
+                
+                if (extractedBytes.endsWith("##END_STEGO##")) {
+                  const finalMessage = extractedBytes.replace("##END_STEGO##", "");
+                  document.getElementById('extractedText').textContent = finalMessage;
+                  document.getElementById('extractResult').style.display = 'block';
+                  return;
+                }
+              }
+            }
+          }
+
+          alert("⚠️ Tidak ditemukan pesan rahasia atau penanda akhir tidak terdeteksi.");
         };
         img.src = event.target.result;
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(currentStegoFile);
+    });
+
+    // Copy extracted message
+    document.getElementById('copyExtractBtn').addEventListener('click', () => {
+      const text = document.getElementById('extractedText').textContent;
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById('copyExtractBtn');
+          const originalText = btn.textContent;
+          btn.textContent = "✅ Copied!";
+          setTimeout(() => btn.textContent = originalText, 2000);
+        });
+      }
     });
   </script>
 </body>

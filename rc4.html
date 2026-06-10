@@ -138,13 +138,12 @@
       transform: translateY(-3px);
     }
 
-    .result {
-      margin-top: 1rem;
-      padding: 12px;
-      background: #F0F9FF;
-      border-radius: 12px;
-      font-family: monospace;
-      word-break: break-all;
+    /* Tambahan untuk format output ASCII */
+    .format-selector {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -180,7 +179,17 @@
       </div>
 
       <div class="input-group">
-        <label>Ciphertext (Hex)</label>
+        <label>
+          Ciphertext 
+          <span class="format-selector">
+            <select id="outputFormat">
+              <option value="hex">HEX</option>
+              <option value="dec">DEC</option>
+              <option value="bin">BIN</option>
+              <option value="symbol">SYMBOL</option>
+            </select>
+          </span>
+        </label>
         <textarea id="ciphertextInput" rows="4" readonly placeholder="Hasil enkripsi akan muncul di sini..."></textarea>
       </div>
 
@@ -201,16 +210,14 @@
         s[i] = i;
       }
 
-      // Key Scheduling Algorithm (KSA)
       let j = 0;
       for (let i = 0; i < 256; i++) {
         j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
         [s[i], s[j]] = [s[j], s[i]];
       }
 
-      // Pseudo-Random Generation Algorithm (PRGA)
       let i = 0;
-      j = 0;                    // ← Penting! Reset j
+      j = 0;
       let result = '';
 
       for (let idx = 0; idx < text.length; idx++) {
@@ -224,16 +231,26 @@
       return result;
     }
 
-    // Convert string to Hex
     function toHex(str) {
       return Array.from(str)
         .map(char => char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
         .join('');
     }
 
-    // Convert Hex to string
+    function toDec(str) {
+      return Array.from(str)
+        .map(char => char.charCodeAt(0).toString().padStart(3, '0'))
+        .join(' ');
+    }
+
+    function toBin(str) {
+      return Array.from(str)
+        .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
+        .join(' ');
+    }
+
     function fromHex(hex) {
-      hex = hex.trim();
+      hex = hex.trim().replace(/\s+/g, '');
       if (hex.length % 2 !== 0) throw new Error("Hex length invalid");
       
       let str = '';
@@ -247,6 +264,7 @@
     document.getElementById('encryptBtn').addEventListener('click', () => {
       const message = document.getElementById('messageInput').value;
       const key = document.getElementById('keyInput').value;
+      const format = document.getElementById('outputFormat').value;
 
       if (!message) {
         alert("❌ Pesan tidak boleh kosong!");
@@ -258,17 +276,32 @@
       }
 
       const encrypted = rc4(message, key);
-      const hexEncrypted = toHex(encrypted);
 
-      document.getElementById('ciphertextInput').value = hexEncrypted;
+      let output = '';
+      switch(format) {
+        case 'hex':
+          output = toHex(encrypted);
+          break;
+        case 'dec':
+          output = toDec(encrypted);
+          break;
+        case 'bin':
+          output = toBin(encrypted);
+          break;
+        case 'symbol':
+          output = encrypted;
+          break;
+      }
+
+      document.getElementById('ciphertextInput').value = output;
       document.getElementById('plaintextInput').value = '';
     });
 
     document.getElementById('decryptBtn').addEventListener('click', () => {
-      const hexCipher = document.getElementById('ciphertextInput').value.trim();
+      const input = document.getElementById('ciphertextInput').value.trim();
       const key = document.getElementById('keyInput').value;
 
-      if (!hexCipher) {
+      if (!input) {
         alert("❌ Ciphertext tidak boleh kosong!");
         return;
       }
@@ -278,11 +311,23 @@
       }
 
       try {
-        const encrypted = fromHex(hexCipher);
-        const decrypted = rc4(encrypted, key);
+        let encryptedStr;
+        const format = document.getElementById('outputFormat').value;
+
+        if (format === 'hex' || /^[0-9A-Fa-f\s]+$/.test(input)) {
+          encryptedStr = fromHex(input);
+        } else if (format === 'dec' || /^\d+\s+\d+/.test(input)) {
+          encryptedStr = input.split(/\s+/).map(n => String.fromCharCode(parseInt(n))).join('');
+        } else if (format === 'bin' || /^[01\s]+$/.test(input)) {
+          encryptedStr = input.split(/\s+/).map(b => String.fromCharCode(parseInt(b, 2))).join('');
+        } else {
+          encryptedStr = input; // symbol
+        }
+
+        const decrypted = rc4(encryptedStr, key);
         document.getElementById('plaintextInput').value = decrypted;
       } catch (e) {
-        alert("❌ Ciphertext hex tidak valid!");
+        alert("❌ Format Ciphertext tidak valid!");
       }
     });
   </script>

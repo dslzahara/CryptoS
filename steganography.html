@@ -204,7 +204,13 @@
         <div class="bit-option" data-bit="3">Bit 3</div>
       </div>
 
-      <button class="btn primary-btn" id="extractBtn">🔓 Extract Message</button>
+      <!-- Tambahan: Password Scrambling untuk Extract -->
+      <div style="margin-top: 15px;">
+        <label style="display:block; margin-bottom:8px; font-weight:500; color:var(--gray);">Scrambling Password (wajib)</label>
+        <input type="password" id="extractScramblePass" placeholder="Masukkan Scrambling Password" />
+      </div>
+
+      <button class="btn primary-btn" id="extractBtn" style="margin-top:15px;">🔓 Extract Message</button>
 
       <div id="extractResult" style="display:none; margin-top: 1.5rem;">
         <h4 style="margin-bottom: 0.8rem;">📄 Pesan Tersembunyi:</h4>
@@ -280,6 +286,12 @@
       renderCarriers();
     };
 
+    // Auto-fill Scramble Password dari Crypto Password
+    document.getElementById('cryptoPass').addEventListener('input', function() {
+      document.getElementById('scramblePass').value = this.value;
+      document.getElementById('extractScramblePass').value = this.value;
+    });
+
     // --- LOGIKA EMEDDING LSB RAHASIA (DI-PERBAIKI) ---
     document.getElementById('hideBtn').addEventListener('click', () => {
       const message = document.getElementById('stegoMessage').value.trim();
@@ -289,7 +301,7 @@
       if (carriers.length === 0) return alert("❌ Tambahkan minimal 1 gambar carrier!");
       if (cryptoPass.length < 8 || cryptoPass.length > 32) return alert("❌ Cryptography Password harus 8-32 karakter!");
 
-      const file = carriers[0]; // Ambil gambar pertama sebagai carrier
+      const file = carriers[0];
       const reader = new FileReader();
 
       reader.onload = function(event) {
@@ -384,6 +396,9 @@
 
     document.getElementById('extractBtn').addEventListener('click', () => {
       if (!currentStegoFile) return alert("❌ Upload gambar stego terlebih dahulu!");
+
+      const scramblePass = document.getElementById('extractScramblePass').value.trim();
+      if (!scramblePass) return alert("❌ Scrambling Password wajib diisi untuk mengekstrak pesan!");
 
       const reader = new FileReader();
       reader.onload = function(event) {
